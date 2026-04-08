@@ -1,59 +1,272 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jira Smart Composer</title>
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
-    <main>
-      <h1>Jira Smart Composer</h1>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jira Smart Composer</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
 
-      <label>Backend URL</label>
-      <input id="backendUrl" value="http://localhost:4000" />
+  <!-- ===== HEADER ===== -->
+  <header id="appHeader">
+    <div class="header-left">
+      <img src="icons/icon.svg" alt="" class="logo-icon" />
+      <h1>Smart Composer</h1>
+    </div>
+    <div class="header-right">
+      <span id="connectionDot" class="status-dot" title="Backend status"></span>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
+    </div>
+  </header>
 
-      <label>Project</label>
-      <select id="projectKey"></select>
+  <!-- ===== STEP INDICATOR ===== -->
+  <nav id="stepIndicator">
+    <div class="step-item active" data-step="1">
+      <span class="step-num">1</span>
+      <span class="step-label">Capture</span>
+    </div>
+    <div class="step-line" data-after="1"></div>
+    <div class="step-item" data-step="2">
+      <span class="step-num">2</span>
+      <span class="step-label">Configure</span>
+    </div>
+    <div class="step-line" data-after="2"></div>
+    <div class="step-item" data-step="3">
+      <span class="step-num">3</span>
+      <span class="step-label">Preview</span>
+    </div>
+    <div class="step-line" data-after="3"></div>
+    <div class="step-item" data-step="4">
+      <span class="step-num">4</span>
+      <span class="step-label">Create</span>
+    </div>
+  </nav>
 
-      <label>Issue Type</label>
-      <select id="issueType">
-        <option>Story</option>
-        <option>Task</option>
-        <option>Bug</option>
-        <option>Epic</option>
-      </select>
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="mainContent">
 
-      <label>Epic Handling</label>
-      <select id="epicMode">
-        <option value="none">None</option>
-        <option value="existing">Attach to existing Epic</option>
-        <option value="new">Create new Epic first</option>
-      </select>
-
-      <div id="existingEpicWrap" class="hidden">
-        <label>Choose Epic</label>
-        <select id="epicKey"></select>
+    <!-- Step 1: Capture Context -->
+    <section id="step1" class="step-panel active">
+      <div id="pageContext" class="context-bar">
+        <span>📄</span>
+        <span id="pageUrl" class="page-url">Loading page info...</span>
       </div>
 
-      <div id="newEpicWrap" class="hidden">
-        <label>New Epic Title</label>
-        <input id="epicTitle" placeholder="Epic title" />
-        <label>New Epic Description</label>
-        <textarea id="epicDescription" rows="2" placeholder="Epic details"></textarea>
+      <div class="field-group">
+        <label class="field-label">Screenshot</label>
+        <div class="capture-modes">
+          <button id="captureFullBtn" class="mode-btn active" type="button">📸 Full Page</button>
+          <button id="captureCropBtn" class="mode-btn" type="button">✂️ Crop</button>
+          <button id="captureNoneBtn" class="mode-btn" type="button">🚫 None</button>
+        </div>
+        <div id="screenshotPreview" class="screenshot-preview hidden">
+          <img id="screenshotImg" alt="Captured screenshot" />
+          <div class="preview-actions">
+            <button id="recaptureBtn" class="small-btn" type="button">↻ Retake</button>
+            <button id="removeScreenshotBtn" class="small-btn danger" type="button">✕ Remove</button>
+          </div>
+        </div>
       </div>
 
-      <label>Raw Description</label>
-      <textarea id="rawInput" rows="5" placeholder="Paste notes, bug report, meeting context..."></textarea>
-
-      <div class="row">
-        <button id="captureBtn" type="button">Capture Screenshot</button>
-        <span id="shotStatus">No screenshot</span>
+      <div class="field-group">
+        <label class="field-label" for="rawInput">Notes / Context</label>
+        <textarea id="rawInput" rows="6" placeholder="Paste meeting notes, bug reports, feature ideas, Slack messages..."></textarea>
       </div>
 
-      <button id="createBtn" type="button">Create in Jira</button>
-      <p id="status"></p>
-    </main>
-    <script src="popup.js"></script>
-  </body>
+      <div class="field-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+        <input type="checkbox" id="useGenAICheckbox" checked style="cursor: pointer;" />
+        <label for="useGenAICheckbox" style="margin: 0; font-size: 13px; color: var(--text-muted); cursor: pointer;">✨ Use AI to structure ticket</label>
+      </div>
+    </section>
+
+    <!-- Step 2: Configure Ticket -->
+    <section id="step2" class="step-panel">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="projectKey">Project</label>
+          <select id="projectKey"></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="issueType">Issue Type</label>
+          <select id="issueType">
+            <option value="Story">📖 Story</option>
+            <option value="Task">✅ Task</option>
+            <option value="Bug">🐛 Bug</option>
+            <option value="Epic">🏔️ Epic</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="priority">Priority</label>
+          <select id="priority">
+            <option value="Highest">🔴 Highest</option>
+            <option value="High">🟠 High</option>
+            <option value="Medium" selected>🟡 Medium</option>
+            <option value="Low">🟢 Low</option>
+            <option value="Lowest">⚪ Lowest</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="assignee">Assignee</label>
+          <select id="assignee">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Labels</label>
+        <select id="labelsSelect">
+          <option value="">+ Add label...</option>
+        </select>
+        <div id="selectedLabels" class="tags-container"></div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="sprint">Sprint</label>
+          <select id="sprint">
+            <option value="">Backlog</option>
+          </select>
+        </div>
+        <div class="field-group" id="storyPointsGroup">
+          <label class="field-label" for="storyPoints">Points</label>
+          <select id="storyPoints">
+            <option value="">—</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="8">8</option>
+            <option value="13">13</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Epic Handling -->
+      <div id="epicSection">
+        <div class="field-group">
+          <label class="field-label" for="epicMode">Epic</label>
+          <select id="epicMode">
+            <option value="none">No Epic</option>
+            <option value="existing">Attach to existing</option>
+            <option value="new">Create new Epic</option>
+          </select>
+        </div>
+        <div id="existingEpicWrap" class="hidden">
+          <div class="field-group">
+            <label class="field-label" for="epicKey">Choose Epic</label>
+            <select id="epicKey"></select>
+          </div>
+        </div>
+        <div id="newEpicWrap" class="hidden">
+          <div class="field-group">
+            <label class="field-label" for="epicTitle">Epic Title</label>
+            <input id="epicTitle" placeholder="New epic title" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="epicDescription">Epic Description</label>
+            <textarea id="epicDescription" rows="2" placeholder="Epic details..."></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: AI Preview & Edit -->
+    <section id="step3" class="step-panel">
+      <div id="refiningState" class="loading-state">
+        <div class="ai-spinner"></div>
+        <p>Gemini is crafting your ticket...</p>
+      </div>
+      <div id="previewContent" class="hidden">
+        <div class="field-group">
+          <label class="field-label" for="previewTitle">Title</label>
+          <input id="previewTitle" placeholder="Generated title" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="previewDescription">Description</label>
+          <textarea id="previewDescription" rows="7" placeholder="Generated description"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Acceptance Criteria</label>
+          <div id="criteriaList"></div>
+        </div>
+        <div id="previewScreenshot" class="screenshot-preview hidden">
+          <label class="field-label">Attached Screenshot</label>
+          <img id="previewScreenshotImg" alt="Screenshot to attach" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Create & Confirm -->
+    <section id="step4" class="step-panel">
+      <div id="creatingState" class="loading-state">
+        <div class="ai-spinner"></div>
+        <p>Creating in Jira...</p>
+      </div>
+      <div id="successState" class="success-state hidden">
+        <div class="success-icon">✓</div>
+        <h2 id="createdKey">—</h2>
+        <p>Ticket created successfully!</p>
+        <div class="success-actions">
+          <a id="openInJiraBtn" href="#" target="_blank" class="btn btn-primary">Open in Jira →</a>
+          <button id="createAnotherBtn" class="btn btn-secondary" type="button">+ Create Another</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== BOTTOM BAR ===== -->
+  <footer id="bottomBar">
+    <button id="prevBtn" class="btn btn-ghost" type="button" disabled>← Back</button>
+    <button id="nextBtn" class="btn btn-primary" type="button">Next →</button>
+  </footer>
+
+  <!-- ===== CROP MODAL ===== -->
+  <div id="cropModal" class="crop-modal hidden">
+    <div class="crop-header">
+      <h3>Select Region</h3>
+      <p>Click and drag to select the area to capture</p>
+    </div>
+    <div class="crop-canvas-wrap">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div class="crop-actions">
+      <button id="cropConfirmBtn" class="btn btn-primary" type="button" disabled>Crop Selection</button>
+      <button id="cropCancelBtn" class="btn btn-ghost" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS PANEL ===== -->
+  <div id="settingsPanel" class="settings-overlay hidden">
+    <div class="settings-content">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button id="closeSettingsBtn" class="icon-btn" type="button">✕</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="backendUrl">Backend URL</label>
+        <input id="backendUrl" value="http://localhost:4000" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="defaultIssueType">Default Issue Type</label>
+        <select id="defaultIssueType">
+          <option value="Story">Story</option>
+          <option value="Task">Task</option>
+          <option value="Bug">Bug</option>
+          <option value="Epic">Epic</option>
+        </select>
+      </div>
+      <button id="saveSettingsBtn" class="btn btn-primary w-full" type="button">Save Settings</button>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toastContainer"></div>
+
+  <script src="popup.js"></script>
+</body>
 </html>

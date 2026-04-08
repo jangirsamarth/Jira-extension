@@ -92,6 +92,9 @@ function buildIssuePayload({
   description,
   adfDescription,
   parentEpicKey,
+  priority,
+  assigneeId,
+  labels,
 }) {
   const payload = {
     fields: {
@@ -104,6 +107,15 @@ function buildIssuePayload({
 
   if (parentEpicKey && issueType !== "Epic") {
     payload.fields.parent = { key: parentEpicKey };
+  }
+  if (priority) {
+    payload.fields.priority = { name: priority };
+  }
+  if (assigneeId) {
+    payload.fields.assignee = { accountId: assigneeId };
+  }
+  if (labels && labels.length > 0) {
+    payload.fields.labels = labels;
   }
 
   return payload;
@@ -431,6 +443,88 @@ app.get("/api/jira/epics", async (req, res) => {
   }
 });
 
+// =================== NEW ENDPOINTS ===================
+
+app.get("/api/jira/members", async (req, res) => {
+  try {
+    ensureJiraEnvOrThrow();
+    const projectKey = String(req.query.projectKey || "").trim();
+    if (!projectKey) return res.status(400).json({ error: "projectKey is required." });
+
+    const response = await axios.get(
+      `${jiraBaseUrl()}/rest/api/3/user/assignable/search?project=${encodeURIComponent(projectKey)}&maxResults=50`,
+      { headers: jiraAuthHeaders() }
+    );
+    const members = (response.data || []).map((u) => ({
+      accountId: u.accountId,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrls?.["24x24"] || "",
+    }));
+    return res.json({ members });
+  } catch (error) {
+    const details = error.response?.data?.errorMessages?.join(", ") || error.message;
+    return res.status(500).json({ error: `Failed to load members: ${details}` });
+  }
+});
+
+app.get("/api/jira/labels", async (_req, res) => {
+  try {
+    ensureJiraEnvOrThrow();
+    const response = await axios.get(
+      `${jiraBaseUrl()}/rest/api/3/label?maxResults=200`,
+      { headers: jiraAuthHeaders() }
+    );
+    return res.json({ labels: response.data?.values || [] });
+  } catch (error) {
+    const details = error.response?.data?.errorMessages?.join(", ") || error.message;
+    return res.status(500).json({ error: `Failed to load labels: ${details}` });
+  }
+});
+
+app.get("/api/jira/boards", async (req, res) => {
+  try {
+    ensureJiraEnvOrThrow();
+    const projectKey = String(req.query.projectKey || "").trim();
+    if (!projectKey) return res.status(400).json({ error: "projectKey is required." });
+
+    const response = await axios.get(
+      `${jiraBaseUrl()}/rest/agile/1.0/board?projectKeyOrId=${encodeURIComponent(projectKey)}&maxResults=10`,
+      { headers: jiraAuthHeaders() }
+    );
+    const boards = (response.data?.values || []).map((b) => ({
+      id: b.id,
+      name: b.name,
+      type: b.type,
+    }));
+    return res.json({ boards });
+  } catch (error) {
+    const details = error.response?.data?.errorMessages?.join(", ") || error.message;
+    return res.status(500).json({ error: `Failed to load boards: ${details}` });
+  }
+});
+
+app.get("/api/jira/sprints", async (req, res) => {
+  try {
+    ensureJiraEnvOrThrow();
+    const boardId = String(req.query.boardId || "").trim();
+    if (!boardId) return res.status(400).json({ error: "boardId is required." });
+
+    const response = await axios.get(
+      `${jiraBaseUrl()}/rest/agile/1.0/board/${boardId}/sprint?state=active,future&maxResults=20`,
+      { headers: jiraAuthHeaders() }
+    );
+    const sprints = (response.data?.values || []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      state: s.state,
+    }));
+    return res.json({ sprints });
+  } catch (error) {
+    const details = error.response?.data?.errorMessages?.join(", ") || error.message;
+    return res.status(500).json({ error: `Failed to load sprints: ${details}` });
+  }
+});
+
 app.post("/api/jira/quick-create", upload.single("screenshot"), async (req, res) => {
   try {
     ensureJiraEnvOrThrow();
@@ -442,6 +536,13 @@ app.post("/api/jira/quick-create", upload.single("screenshot"), async (req, res)
       epicKey,
       epicTitle,
       epicDescription,
+      title: overrideTitle,
+      description: overrideDesc,
+      priority,
+      assigneeId,
+      labels: labelsJson,
+      sprintId,
+      skipAI,
     } = req.body || {};
 
     if (!rawInput || !issueType || !projectKey) {
@@ -450,9 +551,26 @@ app.post("/api/jira/quick-create", upload.single("screenshot"), async (req, res)
       });
     }
 
-    const refined = await generateTicket(rawInput, issueType);
-    const criteriaText = refined.acceptanceCriteria.map((item) => `- ${item}`).join("\n");
-    const combinedDescription = `${refined.description}\n\nAcceptance Criteria:\n${criteriaText}`;
+    const isSkipAI = String(skipAI) === "true";
+    let finalTitle = overrideTitle;
+    let finalDescription = overrideDesc;
+
+    // Only call AI if we didn't explicitly skip AI and we lack title/description
+    if (!isSkipAI && (!finalTitle || !finalDescription)) {
+      const refined = await generateTicket(rawInput, issueType);
+      const criteriaText = refined.acceptanceCriteria.map((item) => `- ${item}`).join("\n");
+      finalTitle = finalTitle || refined.title;
+      finalDescription = finalDescription || `${refined.description}\n\nAcceptance Criteria:\n${criteriaText}`;
+    }
+
+    // Fallback if AI was skipped but title/description are missing
+    if (isSkipAI) {
+      finalTitle = finalTitle || (rawInput ? rawInput.substring(0, 50) + "..." : "New Ticket");
+      finalDescription = finalDescription || rawInput || "No description provided.";
+    }
+
+    let parsedLabels = [];
+    try { parsedLabels = JSON.parse(labelsJson || "[]"); } catch { /* ignore */ }
 
     let parentEpicKey = "";
     let createdEpic = null;
@@ -475,13 +593,28 @@ app.post("/api/jira/quick-create", upload.single("screenshot"), async (req, res)
     const payload = buildIssuePayload({
       projectKey,
       issueType,
-      summary: refined.title,
-      description: combinedDescription,
-      adfDescription: markdownToAdf(combinedDescription),
+      summary: finalTitle,
+      description: finalDescription,
+      adfDescription: markdownToAdf(finalDescription),
       parentEpicKey,
+      priority: priority || undefined,
+      assigneeId: assigneeId || undefined,
+      labels: parsedLabels.length > 0 ? parsedLabels : undefined,
     });
 
     const issue = await createJiraIssue(payload);
+
+    // Move to sprint if requested
+    if (sprintId) {
+      try {
+        await axios.post(
+          `${jiraBaseUrl()}/rest/agile/1.0/sprint/${sprintId}/issue`,
+          { issues: [issue.key] },
+          { headers: { ...jiraAuthHeaders(), "Content-Type": "application/json" } }
+        );
+      } catch { /* sprint assignment is best-effort */ }
+    }
+
     const attachments = req.file ? await attachFilesToIssue(issue.key, [req.file]) : [];
 
     return res.json({
