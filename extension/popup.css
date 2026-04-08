@@ -1,0 +1,75 @@
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  width: 360px;
+  background: #f8fafc;
+}
+
+main {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+label {
+  font-size: 12px;
+  color: #334155;
+}
+
+input,
+select,
+textarea,
+button {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  background: #fff;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  background: #0f172a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row button {
+  width: auto;
+}
+
+#shotStatus {
+  font-size: 12px;
+  color: #475569;
+}
+
+#status {
+  margin: 0;
+  font-size: 12px;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.hidden {
+  display: none;
+}

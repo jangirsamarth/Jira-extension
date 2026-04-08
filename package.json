@@ -1,0 +1,13 @@
+{
+  "name": "jira-smart-composer",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently -n backend,frontend -c green,blue \"npm --prefix backend run dev\" \"npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173\"",
+    "start:backend": "npm --prefix backend run dev",
+    "start:frontend": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

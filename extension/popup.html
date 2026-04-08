@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jira Smart Composer</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Jira Smart Composer</h1>
+
+      <label>Backend URL</label>
+      <input id="backendUrl" value="http://localhost:4000" />
+
+      <label>Project</label>
+      <select id="projectKey"></select>
+
+      <label>Issue Type</label>
+      <select id="issueType">
+        <option>Story</option>
+        <option>Task</option>
+        <option>Bug</option>
+        <option>Epic</option>
+      </select>
+
+      <label>Epic Handling</label>
+      <select id="epicMode">
+        <option value="none">None</option>
+        <option value="existing">Attach to existing Epic</option>
+        <option value="new">Create new Epic first</option>
+      </select>
+
+      <div id="existingEpicWrap" class="hidden">
+        <label>Choose Epic</label>
+        <select id="epicKey"></select>
+      </div>
+
+      <div id="newEpicWrap" class="hidden">
+        <label>New Epic Title</label>
+        <input id="epicTitle" placeholder="Epic title" />
+        <label>New Epic Description</label>
+        <textarea id="epicDescription" rows="2" placeholder="Epic details"></textarea>
+      </div>
+
+      <label>Raw Description</label>
+      <textarea id="rawInput" rows="5" placeholder="Paste notes, bug report, meeting context..."></textarea>
+
+      <div class="row">
+        <button id="captureBtn" type="button">Capture Screenshot</button>
+        <span id="shotStatus">No screenshot</span>
+      </div>
+
+      <button id="createBtn" type="button">Create in Jira</button>
+      <p id="status"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
