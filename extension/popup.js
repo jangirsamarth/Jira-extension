@@ -36,7 +36,7 @@ const state = {
   sprints: [],
   boards: [],
   // Settings
-  backendUrl: "http://localhost:4000",
+  backendUrl: "https://jira-extension.onrender.com",
   defaultIssueType: "Story",
 };
 
