@@ -339,18 +339,35 @@ async function loadBoardsAndSprints() {
   } catch { /* ignore */ }
 }
 
-async function checkHealth() {
+async function checkHealth(retryCount = 0) {
+  const dot = $("connectionDot");
+  const statusEl = $("serverStatus");
+
   try {
+    // Initial state: Waking
+    if (retryCount === 0) {
+      dot.className = "status-dot waking";
+      statusEl.textContent = "Waking server...";
+    }
+
     const data = await api("/api/health");
-    const dot = $("connectionDot");
-    dot.classList.toggle("connected", data.ok);
-    dot.classList.toggle("disconnected", !data.ok);
-    dot.title = data.ok ? "Connected" : `Missing: ${data.missingEnv?.join(", ")}`;
-  } catch {
-    const dot = $("connectionDot");
-    dot.classList.add("disconnected");
-    dot.classList.remove("connected");
-    dot.title = "Backend unreachable";
+    
+    if (data.ok) {
+      dot.className = "status-dot connected";
+      statusEl.textContent = ""; // Clear status when ready
+      dot.title = "Connected";
+    } else {
+      throw new Error("Missing config");
+    }
+  } catch (err) {
+    // Render might be sleeping. Retry up to 15 times (approx 1 min total)
+    if (retryCount < 15) {
+      setTimeout(() => checkHealth(retryCount + 1), 4000);
+    } else {
+      dot.className = "status-dot disconnected";
+      statusEl.textContent = "Offline";
+      dot.title = "Backend unreachable after multiple retries";
+    }
   }
 }
 
