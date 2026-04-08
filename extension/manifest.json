@@ -8,7 +8,11 @@
     "default_icon": "icons/icon.svg"
   },
   "permissions": ["activeTab", "tabs", "storage", "scripting"],
-  "host_permissions": ["http://localhost:4000/*", "http://127.0.0.1:4000/*"],
+  "host_permissions": [
+    "http://localhost:4000/*",
+    "http://127.0.0.1:4000/*",
+    "https://jira-extension.onrender.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   }
