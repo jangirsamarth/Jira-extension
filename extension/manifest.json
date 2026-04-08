@@ -3,9 +3,18 @@
   "name": "Jira Smart Composer",
   "version": "2.0.0",
   "description": "AI-powered Jira ticket creator with screenshot capture, crop selection, and intelligent refinement.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "icons/icon.svg"
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "permissions": ["activeTab", "tabs", "storage", "scripting"],
   "host_permissions": [

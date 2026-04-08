@@ -11,7 +11,7 @@
   <!-- ===== HEADER ===== -->
   <header id="appHeader">
     <div class="header-left">
-      <img src="icons/icon.svg" alt="" class="logo-icon" />
+      <img src="icons/icon-48.png" alt="" class="logo-icon" />
       <h1>Smart Composer</h1>
     </div>
     <div class="header-right">
@@ -50,7 +50,7 @@
     <!-- Step 1: Capture Context -->
     <section id="step1" class="step-panel active">
       <div id="pageContext" class="context-bar">
-        <span>📄</span>
+        <span class="context-icon">📄</span>
         <span id="pageUrl" class="page-url">Loading page info...</span>
       </div>
 
@@ -72,85 +72,90 @@
 
       <div class="field-group">
         <label class="field-label" for="rawInput">Notes / Context</label>
-        <textarea id="rawInput" rows="6" placeholder="Paste meeting notes, bug reports, feature ideas, Slack messages..."></textarea>
+        <textarea id="rawInput" rows="5" placeholder="Paste meeting notes, bug reports, feature ideas, Slack messages..."></textarea>
       </div>
 
-      <div class="field-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-        <input type="checkbox" id="useGenAICheckbox" checked style="cursor: pointer;" />
-        <label for="useGenAICheckbox" style="margin: 0; font-size: 13px; color: var(--text-muted); cursor: pointer;">✨ Use AI to structure ticket</label>
-      </div>
+      <label class="ai-toggle" for="useGenAICheckbox">
+        <input type="checkbox" id="useGenAICheckbox" checked />
+        <span class="ai-toggle-label">✨ Use AI to structure ticket</span>
+      </label>
     </section>
 
     <!-- Step 2: Configure Ticket -->
     <section id="step2" class="step-panel">
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label" for="projectKey">Project</label>
-          <select id="projectKey"></select>
+      <div class="config-section">
+        <div class="config-section-title">Basics</div>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="projectKey">Project</label>
+            <select id="projectKey"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="issueType">Issue Type</label>
+            <select id="issueType">
+              <option value="Story">📖 Story</option>
+              <option value="Task">✅ Task</option>
+              <option value="Bug">🐛 Bug</option>
+              <option value="Epic">🏔️ Epic</option>
+            </select>
+          </div>
         </div>
-        <div class="field-group">
-          <label class="field-label" for="issueType">Issue Type</label>
-          <select id="issueType">
-            <option value="Story">📖 Story</option>
-            <option value="Task">✅ Task</option>
-            <option value="Bug">🐛 Bug</option>
-            <option value="Epic">🏔️ Epic</option>
-          </select>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="priority">Priority</label>
+            <select id="priority">
+              <option value="Highest">🔴 Highest</option>
+              <option value="High">🟠 High</option>
+              <option value="Medium" selected>🟡 Medium</option>
+              <option value="Low">🟢 Low</option>
+              <option value="Lowest">⚪ Lowest</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="assignee">Assignee</label>
+            <select id="assignee">
+              <option value="">Unassigned</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="field-row">
+      <div class="config-section">
+        <div class="config-section-title">Planning</div>
         <div class="field-group">
-          <label class="field-label" for="priority">Priority</label>
-          <select id="priority">
-            <option value="Highest">🔴 Highest</option>
-            <option value="High">🟠 High</option>
-            <option value="Medium" selected>🟡 Medium</option>
-            <option value="Low">🟢 Low</option>
-            <option value="Lowest">⚪ Lowest</option>
+          <label class="field-label">Labels</label>
+          <select id="labelsSelect">
+            <option value="">+ Add label...</option>
           </select>
+          <div id="selectedLabels" class="tags-container"></div>
         </div>
-        <div class="field-group">
-          <label class="field-label" for="assignee">Assignee</label>
-          <select id="assignee">
-            <option value="">Unassigned</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Labels</label>
-        <select id="labelsSelect">
-          <option value="">+ Add label...</option>
-        </select>
-        <div id="selectedLabels" class="tags-container"></div>
-      </div>
-
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label" for="sprint">Sprint</label>
-          <select id="sprint">
-            <option value="">Backlog</option>
-          </select>
-        </div>
-        <div class="field-group" id="storyPointsGroup">
-          <label class="field-label" for="storyPoints">Points</label>
-          <select id="storyPoints">
-            <option value="">—</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="5">5</option>
-            <option value="8">8</option>
-            <option value="13">13</option>
-          </select>
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="sprint">Sprint</label>
+            <select id="sprint">
+              <option value="">Backlog</option>
+            </select>
+          </div>
+          <div class="field-group" id="storyPointsGroup">
+            <label class="field-label" for="storyPoints">Points</label>
+            <select id="storyPoints">
+              <option value="">—</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="5">5</option>
+              <option value="8">8</option>
+              <option value="13">13</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <!-- Epic Handling -->
-      <div id="epicSection">
+      <div id="epicSection" class="config-section">
+        <div class="config-section-title">Epic</div>
         <div class="field-group">
-          <label class="field-label" for="epicMode">Epic</label>
+          <label class="field-label" for="epicMode">Link to Epic</label>
           <select id="epicMode">
             <option value="none">No Epic</option>
             <option value="existing">Attach to existing</option>
@@ -183,20 +188,23 @@
         <p>Gemini is crafting your ticket...</p>
       </div>
       <div id="previewContent" class="hidden">
-        <div class="field-group">
-          <label class="field-label" for="previewTitle">Title</label>
-          <input id="previewTitle" placeholder="Generated title" />
+        <div class="config-section">
+          <div class="config-section-title">Generated Ticket</div>
+          <div class="field-group">
+            <label class="field-label" for="previewTitle">Title</label>
+            <input id="previewTitle" placeholder="Generated title" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="previewDescription">Description</label>
+            <textarea id="previewDescription" rows="6" placeholder="Generated description"></textarea>
+          </div>
         </div>
-        <div class="field-group">
-          <label class="field-label" for="previewDescription">Description</label>
-          <textarea id="previewDescription" rows="7" placeholder="Generated description"></textarea>
-        </div>
-        <div class="field-group">
-          <label class="field-label">Acceptance Criteria</label>
+        <div class="config-section">
+          <div class="config-section-title">Acceptance Criteria</div>
           <div id="criteriaList"></div>
         </div>
         <div id="previewScreenshot" class="screenshot-preview hidden">
-          <label class="field-label">Attached Screenshot</label>
+          <label class="field-label" style="padding: 10px 14px 0;">Attached Screenshot</label>
           <img id="previewScreenshotImg" alt="Screenshot to attach" />
         </div>
       </div>
